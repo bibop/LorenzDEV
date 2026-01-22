@@ -1,0 +1,82 @@
+# Node.js
+node_modules/
+.next/
+.turbo/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv
+venv_*/
+
+# Environment Variables
+.env
+.env.local
+.env.production
+*.env
+
+# Logs
+*.log
+logs/
+*.sqlite
+*.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Systemd service files with sensitive data
+*.service.local
+
+# Supabase local development
+.supabase/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Sensitive documentation
+CREDENTIALS.md
+SECRETS.md
+*EMAIL_CREDENTIALS*.md
+*CREDENTIALS*.md
+
+# Output files
+Output/
+output/
+
+# Duplicate files
+*.2.md
+*.2.example
+* 2.md
+* 2

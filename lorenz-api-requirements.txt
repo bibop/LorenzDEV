@@ -1,0 +1,8 @@
+# LORENZ API Server - Python Dependencies
+
+# Flask web framework
+Flask==3.0.0
+flask-cors==4.0.0
+
+# WSGI server for production
+gunicorn==21.2.0

@@ -1,0 +1,26 @@
+[Unit]
+Description=LORENZ - Super AI Bot Telegram
+After=network.target
+
+[Service]
+Type=simple
+User=linuxuser
+WorkingDirectory=/opt/lorenz-bot
+Environment=PYTHONUNBUFFERED=1
+Environment=TELEGRAM_BOT_TOKEN=YOUR_BOT_TOKEN_HERE
+Environment=AUTHORIZED_CHAT_ID=1377101484
+Environment=CLAUDE_API_KEY=
+ExecStart=/usr/bin/python3 /opt/lorenz-bot/lorenz-bot.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/lorenz-bot.log
+StandardError=append:/var/log/lorenz-bot-error.log
+
+# Security
+PrivateTmp=yes
+NoNewPrivileges=false
+ProtectSystem=full
+ProtectHome=yes
+
+[Install]
+WantedBy=multi-user.target

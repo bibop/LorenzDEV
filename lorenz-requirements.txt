@@ -1,0 +1,12 @@
+# LORENZ Bot - Python Dependencies
+
+# Telegram Bot API
+python-telegram-bot==20.7
+
+# HTTP Client for Claude API
+aiohttp==3.9.1
+
+# Email (built-in)
+# imaplib - built-in
+# smtplib - built-in
+# email - built-in

@@ -1,0 +1,24 @@
+[Unit]
+Description=LORENZ API Server
+After=network.target lorenz-bot.service
+
+[Service]
+Type=simple
+User=linuxuser
+WorkingDirectory=/opt/lorenz-bot
+Environment=PYTHONUNBUFFERED=1
+Environment=FLASK_ENV=production
+ExecStart=/opt/lorenz-bot/venv/bin/python3 /opt/lorenz-bot/lorenz-api.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/lorenz-api.log
+StandardError=append:/var/log/lorenz-api-error.log
+
+# Security
+PrivateTmp=yes
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=yes
+
+[Install]
+WantedBy=multi-user.target

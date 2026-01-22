@@ -1,0 +1,65 @@
+# LORENZ SaaS - Backend Dependencies
+
+# FastAPI & Server
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# Database
+sqlalchemy[asyncio]==2.0.25
+asyncpg==0.29.0
+alembic==1.13.1
+greenlet==3.0.3
+
+# Redis & Celery
+redis==5.0.1
+celery[redis]==5.3.6
+
+# AI & ML
+anthropic==0.18.1
+openai==1.12.0
+sentence-transformers==2.3.1
+qdrant-client==1.7.3
+google-generativeai==0.3.2  # Gemini API
+
+# Advanced RAG
+rank-bm25==0.2.2  # BM25 for keyword search
+FlagEmbedding==1.2.10  # Reranker (optional, GPU recommended)
+numpy==1.26.3
+
+# HTTP Client
+aiohttp==3.9.3
+httpx==0.26.0
+
+# Email
+aiosmtplib==3.0.1
+aioimaplib==1.0.1
+
+# Document Processing
+PyPDF2==3.0.1
+python-docx==1.1.0
+python-pptx==0.6.23  # PowerPoint presentations
+
+# Cryptography
+cryptography==42.0.2
+
+# Utilities
+python-dotenv==1.0.1
+
+# Logging & Monitoring
+structlog==24.1.0
+sentry-sdk[fastapi]==1.40.0
+
+# Testing
+pytest>=7.0.0,<8.0.0
+pytest-asyncio==0.23.4
+pytest-cov==4.1.0
+
+# Development
+black==24.1.1
+isort==5.13.2
+mypy==1.8.0

@@ -1,0 +1,21 @@
+# LORENZ RAG System Requirements
+# Production-grade Hybrid Search + Reranking
+# Compatible with Python 3.12+
+
+# Vector Database
+qdrant-client>=1.12.0
+
+# Embedding Models (locale, no API calls)
+sentence-transformers>=3.0.0
+transformers>=4.40.0
+torch>=2.5.0
+
+# BM25 Keyword Search
+rank-bm25>=0.2.2
+
+# Reranking
+FlagEmbedding>=1.2.11  # Per BGE reranker
+
+# Utilities
+numpy>=1.26.0
+scikit-learn>=1.5.0
