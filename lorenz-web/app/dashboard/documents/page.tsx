@@ -236,7 +236,7 @@ export default function DocumentsPage() {
     ? documents
     : documents.filter(d => d.source_type === selectedFilter);
 
-  const sourceTypes = [...new Set(documents.map(d => d.source_type))];
+  const sourceTypes = Array.from(new Set(documents.map(d => d.source_type)));
 
   return (
     <div className="p-6 space-y-6">
@@ -311,12 +311,10 @@ export default function DocumentsPage() {
 
           <div className="bg-card border border-border rounded-lg p-4">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                stats.reranker_enabled ? 'bg-green-500/10' : 'bg-gray-500/10'
-              }`}>
-                <CheckCircle className={`w-5 h-5 ${
-                  stats.reranker_enabled ? 'text-green-400' : 'text-gray-400'
-                }`} />
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stats.reranker_enabled ? 'bg-green-500/10' : 'bg-gray-500/10'
+                }`}>
+                <CheckCircle className={`w-5 h-5 ${stats.reranker_enabled ? 'text-green-400' : 'text-gray-400'
+                  }`} />
               </div>
               <div>
                 <p className="text-sm font-medium">
@@ -334,11 +332,10 @@ export default function DocumentsPage() {
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
-          isDragging
-            ? 'border-primary bg-primary/5'
-            : 'border-border hover:border-primary/50'
-        }`}
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${isDragging
+          ? 'border-primary bg-primary/5'
+          : 'border-border hover:border-primary/50'
+          }`}
         onClick={() => fileInputRef.current?.click()}
       >
         <Upload className={`w-12 h-12 mx-auto mb-4 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
@@ -391,7 +388,7 @@ export default function DocumentsPage() {
                     <CheckCircle className="w-5 h-5 text-green-400" />
                   )}
                   {uf.status === 'error' && (
-                    <AlertCircle className="w-5 h-5 text-red-400" title={uf.message} />
+                    <AlertCircle className="w-5 h-5 text-red-400" />
                   )}
                 </div>
               </div>
@@ -464,11 +461,10 @@ export default function DocumentsPage() {
           <div className="flex gap-2">
             <button
               onClick={() => setSelectedFilter('all')}
-              className={`px-3 py-1 rounded-full text-xs transition ${
-                selectedFilter === 'all'
-                  ? 'bg-primary text-white'
-                  : 'bg-muted hover:bg-muted/80'
-              }`}
+              className={`px-3 py-1 rounded-full text-xs transition ${selectedFilter === 'all'
+                ? 'bg-primary text-white'
+                : 'bg-muted hover:bg-muted/80'
+                }`}
             >
               Tutti
             </button>
@@ -476,11 +472,10 @@ export default function DocumentsPage() {
               <button
                 key={type}
                 onClick={() => setSelectedFilter(type)}
-                className={`px-3 py-1 rounded-full text-xs transition ${
-                  selectedFilter === type
-                    ? 'bg-primary text-white'
-                    : 'bg-muted hover:bg-muted/80'
-                }`}
+                className={`px-3 py-1 rounded-full text-xs transition ${selectedFilter === type
+                  ? 'bg-primary text-white'
+                  : 'bg-muted hover:bg-muted/80'
+                  }`}
               >
                 {type}
               </button>

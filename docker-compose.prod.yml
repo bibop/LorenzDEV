@@ -1,5 +1,6 @@
 # LORENZ SaaS - Docker Compose Production
-# Deploy with: docker-compose -f docker-compose.prod.yml up -d
+# Deploy with: docker compose -f docker-compose.prod.yml up -d
+# Note: Uses existing infrastructure (Redis, PostgreSQL, Qdrant) on host
 
 version: '3.8'
 
@@ -10,13 +11,13 @@ services:
       context: ./lorenz-web
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.lorenz.bibop.com}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://lorenz.bibop.com/api}
         - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
         - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
     container_name: lorenz-frontend
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3050:3000"
     environment:
       - NODE_ENV=production
     networks:
@@ -32,59 +33,19 @@ services:
     container_name: lorenz-backend
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8050:8000"
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_KEY=${SUPABASE_KEY}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - DATABASE_URL=postgresql+asyncpg://lorenz:lorenz@host.docker.internal:5433/lorenz
+      - REDIS_URL=redis://host.docker.internal:6379
+      - QDRANT_HOST=host.docker.internal
+      - QDRANT_PORT=6333
       - SECRET_KEY=${SECRET_KEY}
-      - CORS_ORIGINS=${CORS_ORIGINS:-https://lorenz.bibop.com,https://dev.lorenz.bibop.com}
-    networks:
-      - lorenz-network
-    depends_on:
-      - redis
-
-  # Redis (for avatar sessions and caching)
-  redis:
-    image: redis:7-alpine
-    container_name: lorenz-redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    networks:
-      - lorenz-network
-
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: lorenz-postgres
-    restart: unless-stopped
-    environment:
-      - POSTGRES_USER=lorenz
-      - POSTGRES_PASSWORD=lorenz
-      - POSTGRES_DB=lorenz
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - lorenz-network
-
-  # Qdrant Vector Database
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: lorenz-qdrant
-    restart: unless-stopped
-    ports:
-      - "6333:6333"
-    volumes:
-      - qdrant-data:/qdrant/storage
+      - CORS_ORIGINS=https://lorenz.bibop.com,https://dev.lorenz.bibop.com
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - lorenz-network
 
@@ -94,8 +55,8 @@ services:
     container_name: lorenz-nginx
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"
+      - "8443:443"
     volumes:
       - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./deploy/ssl:/etc/nginx/ssl:ro
@@ -106,21 +67,9 @@ services:
       - frontend
       - backend
 
-  # Certbot for SSL certificates
-  certbot:
-    image: certbot/certbot
-    container_name: lorenz-certbot
-    volumes:
-      - ./deploy/ssl:/etc/letsencrypt
-      - certbot-webroot:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-
 networks:
   lorenz-network:
     driver: bridge
 
 volumes:
-  redis-data:
-  postgres-data:
-  qdrant-data:
   certbot-webroot:
