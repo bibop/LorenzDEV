@@ -63,6 +63,7 @@ MAX_CANDIDATES = 20  # Candidates before reranking
 
 _encoder = None
 _reranker = None
+_colbert_reranker = None
 _qdrant_client = None
 
 
@@ -97,6 +98,25 @@ def get_reranker():
             logger.error(f"Failed to load reranker: {e}")
             return None
     return _reranker
+
+
+def get_colbert_reranker():
+    """Lazy load ColBERT reranker (late interaction)"""
+    global _colbert_reranker
+    if _colbert_reranker is None:
+        try:
+            from ragatouille import RAGPretrainedModel
+            model_name = os.getenv('RAG_COLBERT_MODEL', 'colbert-ir/colbertv2.0')
+            logger.info(f"Loading ColBERT reranker: {model_name}")
+            _colbert_reranker = RAGPretrainedModel.from_pretrained(model_name)
+            logger.info("ColBERT reranker loaded")
+        except ImportError:
+            logger.warning("ragatouille not available, ColBERT reranking disabled")
+            return None
+        except Exception as e:
+            logger.error(f"Failed to load ColBERT reranker: {e}")
+            return None
+    return _colbert_reranker
 
 
 def get_qdrant_client():
@@ -430,55 +450,72 @@ class AdvancedRAGService:
         self,
         query: str,
         documents: List[Dict],
-        top_k: int = DEFAULT_TOP_K
+        top_k: int = DEFAULT_TOP_K,
+        method: str = "colbert"  # "colbert" or "cross-encoder"
     ) -> List[Dict]:
         """
-        Rerank documents using cross-encoder
-
-        Args:
-            query: User query
-            documents: List of candidate documents
-            top_k: Number of top results to return
-
-        Returns:
-            Reranked top-k documents
+        Rerank documents using ColBERT (late interaction) or cross-encoder
         """
-        reranker = get_reranker()
+        if not documents:
+            return []
 
-        if not reranker or not documents:
-            # Return top-k by current score if no reranker
+        if method == "colbert":
+            reranker = get_colbert_reranker()
+            if reranker:
+                try:
+                    contents = [doc["content"] for doc in documents]
+                    # Create temporary search objects for ragatouille
+                    loop = asyncio.get_event_loop()
+                    scores = await loop.run_in_executor(
+                        _executor,
+                        lambda: reranker.rerank(query=query, documents=contents, k=len(contents))
+                    )
+                    
+                    # Update scores
+                    for i, result in enumerate(scores):
+                        # ragatouille results are dicts with 'content' and 'score'
+                        # but Rerank method returns results already sorted.
+                        # We need to map back to our documents.
+                        original_idx = result["result_index"]
+                        documents[original_idx]["rerank_score"] = float(result["score"])
+                        documents[original_idx]["source_rank"] = result["rank"]
+
+                    reranked = sorted(
+                        documents,
+                        key=lambda x: x.get("rerank_score", -100),
+                        reverse=True
+                    )
+                    return reranked[:top_k]
+                except Exception as e:
+                    logger.error(f"ColBERT reranking failed: {e}")
+        
+        # Fallback to cross-encoder if ColBERT fails or is not selected
+        reranker = get_reranker()
+        if not reranker:
             return documents[:top_k]
 
         try:
-            # Prepare pairs for reranking
             pairs = [[query, doc["content"]] for doc in documents]
-
-            # Compute reranking scores (CPU-bound, run in executor)
             loop = asyncio.get_event_loop()
             rerank_scores = await loop.run_in_executor(
                 _executor,
                 lambda: reranker.compute_score(pairs, normalize=True)
             )
-
-            # Handle single result
+            
             if isinstance(rerank_scores, float):
                 rerank_scores = [rerank_scores]
 
-            # Add rerank scores to documents
             for doc, score in zip(documents, rerank_scores):
                 doc["rerank_score"] = float(score)
 
-            # Sort by rerank score
             reranked = sorted(
                 documents,
                 key=lambda x: x.get("rerank_score", 0),
                 reverse=True
             )
-
             return reranked[:top_k]
-
         except Exception as e:
-            logger.error(f"Reranking failed: {e}")
+            logger.error(f"Cross-encoder reranking failed: {e}")
             return documents[:top_k]
 
     async def hybrid_search(

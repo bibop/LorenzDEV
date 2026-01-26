@@ -13,7 +13,8 @@ from uuid import UUID
 
 from app.database import get_db
 from app.api.deps import get_current_user
-from app.models import User
+from app.models import User, Skill, SkillProposal, SkillType, SkillStatus
+from sqlalchemy import select, update
 from app.services.skills import (
     SkillsManager,
     create_skills_manager,
@@ -84,6 +85,44 @@ class SkillStatsResponse(BaseModel):
     total_cost_usd: float
     skill_count: int
     enabled_count: int
+
+
+# --- Unified Registry Schemas ---
+
+class SkillProposalCreate(BaseModel):
+    """Schema to propose a new emergent skill"""
+    suggested_name: str
+    reasoning: str
+    confidence: float
+    proposed_schema: Dict[str, Any]
+    pattern_data: Optional[Dict[str, Any]] = None
+
+
+class SkillProposalResponse(BaseModel):
+    """Response for a skill proposal"""
+    id: UUID
+    suggested_name: str
+    reasoning: str
+    confidence: float
+    status: str
+    proposed_schema: Dict[str, Any]
+    created_at: datetime
+
+
+class SkillUnifiedResponse(BaseModel):
+    """Response for a unified skill"""
+    id: UUID
+    name: str
+    description: str
+    skill_type: SkillType
+    status: SkillStatus
+    category: Optional[str]
+    icon: Optional[str]
+    version: str
+    tool_schema: Dict[str, Any]
+    use_count: float
+    success_rate: float
+    avg_latency_ms: float
 
 
 # ============================================================================
@@ -399,3 +438,112 @@ async def draft_email(
         artifacts=result.artifacts,
         execution_time_ms=result.execution_time_ms
     )
+
+
+# ============================================================================
+# EMERGENT SKILLS REGISTRY (Management)
+# ============================================================================
+
+@router.post("/emergent/propose", response_model=SkillProposalResponse, status_code=status.HTTP_201_CREATED)
+async def propose_emergent_skill(
+    proposal: SkillProposalCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Propose a new emergent skill (usually called by the RSI/Pattern Miner).
+    """
+    new_proposal = SkillProposal(
+        tenant_id=current_user.tenant_id,
+        suggested_name=proposal.suggested_name,
+        reasoning=proposal.reasoning,
+        confidence=proposal.confidence,
+        proposed_schema=proposal.proposed_schema,
+        pattern_data=proposal.pattern_data,
+        status="pending"
+    )
+    db.add(new_proposal)
+    await db.commit()
+    await db.refresh(new_proposal)
+    return new_proposal
+
+
+@router.get("/emergent/proposals", response_model=List[SkillProposalResponse])
+async def list_proposals(
+    status: str = "pending",
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """List emergent skill proposals for review"""
+    result = await db.execute(
+        select(SkillProposal).where(
+            SkillProposal.tenant_id == current_user.tenant_id,
+            SkillProposal.status == status
+        )
+    )
+    return result.scalars().all()
+
+
+@router.post("/emergent/{proposal_id}/approve", response_model=SkillUnifiedResponse)
+async def approve_skill_proposal(
+    proposal_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Approve a proposal and promote it to an active Skill.
+    """
+    # 1. Get proposal
+    proposal_res = await db.execute(
+        select(SkillProposal).where(
+            SkillProposal.id == proposal_id,
+            SkillProposal.tenant_id == current_user.tenant_id
+        )
+    )
+    proposal = proposal_res.scalar_one_or_none()
+    
+    if not proposal:
+        raise HTTPException(status_code=404, detail="Proposal not found")
+    
+    if proposal.status != "pending":
+        raise HTTPException(status_code=400, detail=f"Proposal is already {proposal.status}")
+
+    # 2. Update proposal status
+    proposal.status = "approved"
+    proposal.reviewed_by = current_user.id
+
+    # 3. Create actual Skill
+    new_skill = Skill(
+        tenant_id=current_user.tenant_id,
+        name=proposal.suggested_name,
+        description=f"Emergent skill learned from pattern: {proposal.suggested_name}",
+        skill_type=SkillType.EMERGENT,
+        status=SkillStatus.ACTIVE,
+        tool_schema=proposal.proposed_schema,
+        implementation={"pattern_data": proposal.pattern_data},
+        category="emergent"
+    )
+    db.add(new_skill)
+    
+    await db.commit()
+    await db.refresh(new_skill)
+    return new_skill
+
+
+@router.post("/emergent/{proposal_id}/reject")
+async def reject_skill_proposal(
+    proposal_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Reject an emergent skill proposal"""
+    await db.execute(
+        update(SkillProposal)
+        .where(
+            SkillProposal.id == proposal_id,
+            SkillProposal.tenant_id == current_user.tenant_id
+        )
+        .values(status="rejected", reviewed_by=current_user.id)
+    )
+    await db.commit()
+    return {"message": "Proposal rejected"}

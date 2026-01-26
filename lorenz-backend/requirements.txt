@@ -29,6 +29,7 @@ google-generativeai==0.3.2  # Gemini API
 # Advanced RAG
 rank-bm25==0.2.2  # BM25 for keyword search
 FlagEmbedding==1.2.10  # Reranker (optional, GPU recommended)
+ragatouille==0.0.8  # ColBERT support
 numpy==1.26.3
 
 # HTTP Client

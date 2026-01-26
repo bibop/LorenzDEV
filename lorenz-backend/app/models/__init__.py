@@ -22,6 +22,15 @@ from app.models.twin import (
     TwinActionModel,
 )
 
+# Unified Skill System Models
+from app.models.skills import (
+    Skill,
+    SkillProposal,
+    SkillRun,
+    SkillType,
+    SkillStatus
+)
+
 # MNEME Knowledge Base Models
 from app.services.knowledge.models import (
     KnowledgeEntryModel,
@@ -52,4 +61,10 @@ __all__ = [
     "KnowledgeEntryModel",
     "EmergentSkillModel",
     "LearningHistoryModel",
+    # Skills
+    "Skill",
+    "SkillProposal",
+    "SkillRun",
+    "SkillType",
+    "SkillStatus",
 ]
