@@ -33,10 +33,11 @@ ssh $SSH_USER@$VULTR_IP << 'ENDSSH'
     sudo chown -R $USER:$USER /opt/lorenz
 ENDSSH
 
-# Step 2: Copy files
+# Step 2: Copy files (excluding heavy dirs that Docker will rebuild)
 echo "📁 Copying project files..."
 rsync -avz --exclude='node_modules' --exclude='.next' --exclude='__pycache__' \
-    --exclude='.git' --exclude='.env' --exclude='*.pyc' \
+    --exclude='.git' --exclude='.env' --exclude='*.pyc' --exclude='venv' \
+    --exclude='*.egg-info' --exclude='.pytest_cache' \
     ./ $SSH_USER@$VULTR_IP:$DEPLOY_DIR/
 
 # Step 3: Copy environment file
@@ -53,17 +54,17 @@ ssh $SSH_USER@$VULTR_IP << ENDSSH
     cd $DEPLOY_DIR
     
     # Stop existing containers
-    docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
+    docker compose -f docker-compose.prod.yml down 2>/dev/null || true
     
     # Build fresh
-    docker-compose -f docker-compose.prod.yml build --no-cache
+    docker compose -f docker-compose.prod.yml build --no-cache
     
     # Start services
-    docker-compose -f docker-compose.prod.yml up -d
+    docker compose -f docker-compose.prod.yml up -d
     
     # Show status
     echo "📊 Container status:"
-    docker-compose -f docker-compose.prod.yml ps
+    docker compose -f docker-compose.prod.yml ps
 ENDSSH
 
 # Step 5: Setup SSL certificates (run after DNS propagation)
@@ -87,7 +88,7 @@ ssh $SSH_USER@$VULTR_IP << 'ENDSSH'
         --non-interactive || echo "⚠️ SSL setup skipped - run manually after DNS propagation"
     
     # Restart nginx to load certs
-    docker-compose -f docker-compose.prod.yml restart nginx 2>/dev/null || true
+    docker compose -f docker-compose.prod.yml restart nginx 2>/dev/null || true
 ENDSSH
 
 echo ""
