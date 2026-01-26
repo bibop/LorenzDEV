@@ -85,7 +85,7 @@ function useMicrophoneDebug() {
       const analyze = () => {
         if (!analyserRef.current || !dataArrayRef.current) return;
 
-        analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+        analyserRef.current.getByteFrequencyData(dataArrayRef.current as any);
 
         // Calculate volume
         let sum = 0;
@@ -284,11 +284,10 @@ export default function VoiceOrbDemo() {
           <button
             key={s}
             onClick={() => setState(s)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-              state === s
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${state === s
                 ? 'bg-violet-600 text-white'
                 : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-            }`}
+              }`}
           >
             {s.charAt(0).toUpperCase() + s.slice(1)}
           </button>
@@ -301,9 +300,8 @@ export default function VoiceOrbDemo() {
           <button
             key={name}
             onClick={() => setSelectedColors(name as keyof typeof colorPresets)}
-            className={`w-10 h-10 rounded-full border-2 transition ${
-              selectedColors === name ? 'border-white scale-110' : 'border-transparent'
-            }`}
+            className={`w-10 h-10 rounded-full border-2 transition ${selectedColors === name ? 'border-white scale-110' : 'border-transparent'
+              }`}
             style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}
             title={name}
           />
@@ -314,11 +312,10 @@ export default function VoiceOrbDemo() {
       <div className="flex flex-wrap gap-3 justify-center mb-6">
         <button
           onClick={handleToggleMic}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition ${
-            mic.isListening
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition ${mic.isListening
               ? 'bg-red-600 text-white hover:bg-red-700'
               : 'bg-emerald-600 text-white hover:bg-emerald-700'
-          }`}
+            }`}
         >
           {mic.isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
           {mic.isListening ? 'Stop Mic' : 'Use Real Mic'}
@@ -326,11 +323,10 @@ export default function VoiceOrbDemo() {
 
         <button
           onClick={handleSimulate}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition ${
-            sim.isSimulating
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition ${sim.isSimulating
               ? 'bg-orange-600 text-white hover:bg-orange-700'
               : 'bg-slate-700 text-white hover:bg-slate-600'
-          }`}
+            }`}
         >
           {sim.isSimulating ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           {sim.isSimulating ? 'Stop Simulation' : 'Simulate Voice'}

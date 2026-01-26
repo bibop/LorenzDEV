@@ -67,7 +67,7 @@ export function useAudioAnalyzer(options: AudioAnalyzerOptions = {}): AudioAnaly
 
   // Calculate volume from frequency data (0-1)
   const calculateVolume = useCallback((analyzer: AnalyserNode, dataArray: Uint8Array): number => {
-    analyzer.getByteFrequencyData(dataArray);
+    analyzer.getByteFrequencyData(dataArray as any);
 
     let sum = 0;
     let count = 0;
