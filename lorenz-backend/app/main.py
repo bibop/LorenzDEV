@@ -107,7 +107,7 @@ async def root():
 
 
 # Import and include routers
-from app.api.v1 import auth, users, email, chat, rag, onboarding, skills, knowledge, execution, twin, social_graph
+from app.api.v1 import auth, users, email, chat, rag, onboarding, skills, knowledge, execution, twin, social_graph, rsi
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
@@ -120,6 +120,7 @@ app.include_router(onboarding.router, prefix="/api/v1/onboarding", tags=["Onboar
 app.include_router(execution.router, prefix="/api/v1/exec", tags=["Execution"])
 app.include_router(twin.router, prefix="/api/v1/twin", tags=["Human Digital Twin"])
 app.include_router(social_graph.router, prefix="/api/v1", tags=["Social Graph"])
+app.include_router(rsi.router, prefix="/api/v1", tags=["RSI"])
 
 # Webhook routers
 from app.api.webhooks import telegram as telegram_webhook
