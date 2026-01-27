@@ -85,3 +85,15 @@
   @apply bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60;
 }
 
+/* Input Styles */
+.input-minimal {
+  @apply w-full px-4 py-3.5 bg-muted/30 text-foreground rounded-xl border border-border/50
+         placeholder:text-muted-foreground
+         focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50
+         transition-all duration-200;
+}
+
+.dark .input-minimal {
+  @apply bg-white/5 text-foreground border-white/10
+         focus:ring-primary/30 focus:border-primary/40;
+}

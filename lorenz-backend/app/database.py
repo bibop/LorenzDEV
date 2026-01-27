@@ -31,8 +31,8 @@ async_session = async_sessionmaker(
     autoflush=False,
 )
 
-# Base class for models
-Base = declarative_base()
+# Models are imported here to register them with Base.metadata
+from app.models import Base
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -60,6 +60,9 @@ async def set_tenant_context(session: AsyncSession, tenant_id: str) -> None:
 
 async def init_db() -> None:
     """Initialize database tables"""
+    # Import models explicitly to ensure they are registered with Base.metadata
+    import app.models  # noqa
+    
     async with engine.begin() as conn:
         # Create all tables
         await conn.run_sync(Base.metadata.create_all)

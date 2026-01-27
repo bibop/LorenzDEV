@@ -22,7 +22,9 @@ from app.config import settings
 TEST_DATABASE_URL = settings.DATABASE_URL.replace("/lorenz", "/lorenz_test")
 
 
-@pytest.fixture(scope="session")
+import pytest_asyncio
+
+@pytest_asyncio.fixture(scope="function")
 def event_loop():
     """Create event loop for async tests"""
     loop = asyncio.get_event_loop_policy().new_event_loop()
@@ -30,7 +32,7 @@ def event_loop():
     loop.close()
 
 
-@pytest.fixture(scope="session")
+@pytest_asyncio.fixture(scope="function")
 async def test_engine():
     """Create test database engine"""
     engine = create_async_engine(TEST_DATABASE_URL, echo=False)
@@ -46,7 +48,7 @@ async def test_engine():
     await engine.dispose()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
     """Create database session for each test"""
     async_session = async_sessionmaker(
@@ -60,7 +62,7 @@ async def db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
         await session.rollback()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def test_tenant(db_session: AsyncSession) -> Tenant:
     """Create test tenant"""
     tenant = Tenant(
@@ -75,7 +77,7 @@ async def test_tenant(db_session: AsyncSession) -> Tenant:
     return tenant
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def test_user(db_session: AsyncSession, test_tenant: Tenant) -> User:
     """Create test user"""
     from app.services.auth import hash_password
@@ -96,7 +98,7 @@ async def test_user(db_session: AsyncSession, test_tenant: Tenant) -> User:
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def auth_token(test_user: User) -> str:
     """Generate JWT token for test user"""
     from app.services.auth import create_access_token
@@ -104,7 +106,7 @@ async def auth_token(test_user: User) -> str:
     return create_access_token(subject=str(test_user.id))
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """Create test HTTP client"""
     
