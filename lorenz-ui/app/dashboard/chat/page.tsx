@@ -9,6 +9,7 @@ import { ConversationList } from '@/components/chat/conversation-list';
 import { VoiceSettings } from '@/components/voice/voice-settings';
 import { PersonaEditor } from '@/components/voice/persona-editor';
 import { VoiceUploader } from '@/components/voice/voice-uploader';
+import { VoiceChat } from '@/components/voice/voice-chat';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Menu, Settings, LogOut, X, Loader2, Mic, Plus, Upload } from 'lucide-react';
@@ -38,8 +39,9 @@ export default function ChatPage() {
     const [showVoiceSettings, setShowVoiceSettings] = useState(false);
     const [showPersonaEditor, setShowPersonaEditor] = useState(false);
     const [showVoiceUploader, setShowVoiceUploader] = useState(false);
-    const [selectedProvider, setSelectedProvider] = useState('elevenlabs');
+    const [selectedProvider, setSelectedProvider] = useState<'personaplex' | 'elevenlabs'>('elevenlabs');
     const [selectedVoice, setSelectedVoice] = useState('');
+    const [isVoiceChatActive, setIsVoiceChatActive] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -187,6 +189,27 @@ export default function ChatPage() {
                     </div>
                 </div>
 
+                {/* Voice Chat Section */}
+                {isVoiceChatActive && activeConversationId && selectedVoice && (
+                    <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">
+                        <VoiceChat
+                            conversationId={activeConversationId}
+                            provider={selectedProvider}
+                            voiceId={selectedVoice}
+                            onTranscript={(text, isUser) => {
+                                // Add transcript to messages
+                                const newMessage: ChatMessage = {
+                                    id: Date.now().toString(),
+                                    content: text,
+                                    role: isUser ? 'user' : 'assistant',
+                                    timestamp: new Date(),
+                                };
+                                setMessages((prev) => [...prev, newMessage]);
+                            }}
+                        />
+                    </div>
+                )}
+
                 {/* Messages */}
                 <ScrollArea className="flex-1 p-4">
                     <div className="max-w-3xl mx-auto">
@@ -253,7 +276,7 @@ export default function ChatPage() {
                         <VoiceSettings
                             selectedProvider={selectedProvider}
                             selectedVoice={selectedVoice}
-                            onProviderChange={setSelectedProvider}
+                            onProviderChange={(provider) => setSelectedProvider(provider as 'personaplex' | 'elevenlabs')}
                             onVoiceChange={setSelectedVoice}
                         />
                         <div className="space-y-2">
