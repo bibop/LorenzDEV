@@ -8,7 +8,7 @@ services:
   # Frontend (Next.js)
   frontend:
     build:
-      context: ./lorenz-web
+      context: ./lorenz-ui
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://lorenz.bibop.com/api}
