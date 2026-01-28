@@ -122,6 +122,7 @@ class Settings(BaseSettings):
 
     # Frontend URL (for CORS and redirects)
     FRONTEND_URL: str = "http://localhost:3000"
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:3001,https://lorenz.bibop.com,https://dev.lorenz.bibop.com,https://bibop.com,https://www.bibop.com"
 
     # Logging
     LOG_LEVEL: str = "INFO"
