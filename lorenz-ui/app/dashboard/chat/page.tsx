@@ -13,9 +13,9 @@ import { VoiceChat } from '@/components/voice/voice-chat';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { X, Menu, Mic, Settings, LogOut, Plus, Upload } from 'lucide-react';
 
 interface ChatMessage {
     id: string;

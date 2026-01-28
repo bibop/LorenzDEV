@@ -73,6 +73,10 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: Optional[str] = None
     PERPLEXITY_API_KEY: Optional[str] = None
     OPENROUTER_API_KEY: Optional[str] = None
+    ELEVENLABS_API_KEY: Optional[str] = None
+    
+    # Voice Providers
+    PERSONAPLEX_URL: str = "http://localhost:8080"
 
     # RAG Configuration
     RAG_EMBEDDING_MODEL: str = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"

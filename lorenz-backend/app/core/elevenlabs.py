@@ -167,6 +167,7 @@ def get_elevenlabs_client() -> ElevenLabsClient:
     global _elevenlabs_client
     
     if _elevenlabs_client is None:
-        _elevenlabs_client = ElevenLabsClient()
+        from app.config import settings
+        _elevenlabs_client = ElevenLabsClient(api_key=settings.ELEVENLABS_API_KEY)
     
     return _elevenlabs_client

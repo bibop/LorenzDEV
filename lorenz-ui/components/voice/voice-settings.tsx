@@ -62,23 +62,49 @@ export function VoiceSettings({
 
     const loadProviders = async () => {
         try {
+            const token = api.getToken();
+            console.log('[VoiceSettings] Loading providers...');
+            console.log('[VoiceSettings] Token available:', !!token);
+            if (token) {
+                console.log('[VoiceSettings] Token preview:', token.substring(0, 20) + '...');
+            }
+
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/api/v1/voice/voice-providers/`,
                 {
                     headers: {
-                        Authorization: `Bearer ${api.getToken()}`,
+                        Authorization: token ? `Bearer ${token}` : '',
                     },
                 }
             );
-            const data = await response.json();
-            setProviders(data);
 
-            // Auto-select first enabled provider
-            if (!selectedProvider && data.length > 0) {
-                onProviderChange(data[0].id);
+            console.log('[VoiceSettings] Response status:', response.status, response.statusText);
+
+            if (!response.ok) {
+                console.error('Failed to fetch providers:', response.status, response.statusText);
+                const errorBody = await response.text();
+                console.error('[VoiceSettings] Error response:', errorBody);
+                setProviders([]);
+                return;
+            }
+
+            const data = await response.json();
+            console.log('[VoiceSettings] Received data type:', typeof data, Array.isArray(data));
+
+            if (Array.isArray(data)) {
+                console.log('[VoiceSettings] Loaded', data.length, 'providers');
+                setProviders(data);
+                // Auto-select first enabled provider
+                if (!selectedProvider && data.length > 0) {
+                    onProviderChange(data[0].id);
+                }
+            } else {
+                console.error('Expected array of providers, got:', typeof data);
+                setProviders([]);
             }
         } catch (error) {
             console.error('Failed to load providers:', error);
+            setProviders([]);
         } finally {
             setLoading(false);
         }
@@ -86,18 +112,42 @@ export function VoiceSettings({
 
     const loadProviderVoices = async (providerId: string) => {
         try {
+            const token = api.getToken();
+            console.log('[VoiceSettings] Loading voices for provider:', providerId);
+            console.log('[VoiceSettings] Token available:', !!token);
+
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/api/v1/voice/voice-providers/${providerId}/voices`,
                 {
                     headers: {
-                        Authorization: `Bearer ${api.getToken()}`,
+                        Authorization: token ? `Bearer ${token}` : '',
                     },
                 }
             );
+
+            console.log('[VoiceSettings] Voices response status:', response.status, response.statusText);
+
+            if (!response.ok) {
+                console.error('Failed to fetch voices:', response.status, response.statusText);
+                const errorBody = await response.text();
+                console.error('[VoiceSettings] Voices error response:', errorBody);
+                setVoices([]);
+                return;
+            }
+
             const data = await response.json();
-            setVoices(data);
+            console.log('[VoiceSettings] Voices data type:', typeof data, Array.isArray(data));
+
+            if (Array.isArray(data)) {
+                console.log('[VoiceSettings] Loaded', data.length, 'voices');
+                setVoices(data);
+            } else {
+                console.error('Expected array of voices, got:', typeof data);
+                setVoices([]);
+            }
         } catch (error) {
             console.error('Failed to load voices:', error);
+            setVoices([]);
         }
     };
 

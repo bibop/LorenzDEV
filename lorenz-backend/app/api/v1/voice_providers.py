@@ -27,11 +27,17 @@ async def list_providers(
     providers = []
     
     for provider in VoiceProvider:
+        enabled = False
+        if provider == VoiceProvider.ELEVENLABS:
+            enabled = bool(settings.ELEVENLABS_API_KEY) or settings.DEBUG
+        elif provider == VoiceProvider.PERSONAPLEX:
+            enabled = bool(settings.PERSONAPLEX_URL) and settings.DEBUG
+            
         providers.append({
             "id": provider.value,
             "name": PROVIDER_NAMES[provider],
             "capabilities": PROVIDER_CAPABILITIES[provider],
-            "enabled": True,  # TODO: Check if API keys are configured
+            "enabled": enabled,
         })
     
     return providers
@@ -47,6 +53,28 @@ async def get_provider_voices(
     """
     if provider == VoiceProvider.ELEVENLABS:
         try:
+            if not settings.ELEVENLABS_API_KEY and settings.DEBUG:
+                return [
+                    {
+                        "id": "mock-voice-1",
+                        "name": "Lorenz Prime (Mock)",
+                        "provider": "elevenlabs",
+                        "category": "professional",
+                        "description": "Deep, smooth executive voice",
+                        "preview_url": None,
+                        "labels": {"accent": "american", "gender": "male"},
+                    },
+                    {
+                        "id": "mock-voice-2",
+                        "name": "Aura (Mock)",
+                        "provider": "elevenlabs",
+                        "category": "warm",
+                        "description": "Bright, helpful assistant voice",
+                        "preview_url": None,
+                        "labels": {"accent": "british", "gender": "female"},
+                    }
+                ]
+            
             client = get_elevenlabs_client()
             voices = await client.get_voices()
             
@@ -63,6 +91,8 @@ async def get_provider_voices(
                 for v in voices
             ]
         except Exception as e:
+            if settings.DEBUG:
+                return []
             raise HTTPException(
                 status_code=503,
                 detail=f"ElevenLabs API error: {str(e)}"
@@ -70,6 +100,17 @@ async def get_provider_voices(
     
     elif provider == VoiceProvider.PERSONAPLEX:
         try:
+            if settings.DEBUG:
+                # Return mock voices for local dev
+                return [
+                    {
+                        "id": "persona-mock-1",
+                        "name": "Synapse-1 (Local Mock)",
+                        "provider": "personaplex",
+                        "description": "High-fidelity local processing",
+                    }
+                ]
+                
             client = get_personaplex_client()
             voices = await client.get_available_voices()
             
@@ -83,6 +124,8 @@ async def get_provider_voices(
                 for v in voices
             ]
         except Exception as e:
+            if settings.DEBUG:
+                return []
             raise HTTPException(
                 status_code=503,
                 detail=f"PersonaPlex API error: {str(e)}"

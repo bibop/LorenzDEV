@@ -123,8 +123,8 @@ def get_personaplex_client() -> PersonaPlexClient:
     global _personaplex_client
     
     if _personaplex_client is None:
-        # TODO: Get from environment variables
-        server_url = "http://localhost:8080"  # PersonaPlex server
+        from app.config import settings
+        server_url = settings.PERSONAPLEX_URL
         _personaplex_client = PersonaPlexClient(server_url)
     
     return _personaplex_client

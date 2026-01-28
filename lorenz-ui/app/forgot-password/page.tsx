@@ -1,46 +1,28 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { api } from '@/lib/api';
-import { Sparkles, Loader2, ArrowRight } from 'lucide-react';
+import { Sparkles, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function LoginPage() {
-    const router = useRouter();
+export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
 
+        // Mock API call for now since backend might not have this endpoint yet
         try {
-            console.log('[Login] Attempting login for:', email);
-            const response = await api.login({ email, password });
-            console.log('[Login] Login successful, response:', {
-                hasAccessToken: !!response.access_token,
-                hasRefreshToken: !!response.refresh_token,
-                tokenType: response.token_type,
-                userId: response.user.id,
-            });
-
-            // Verify token was stored
-            const storedToken = api.getToken();
-            console.log('[Login] Token stored in localStorage:', !!storedToken);
-            console.log('[Login] Token preview:', storedToken?.substring(0, 20) + '...');
-
-            toast.success('Access Granted. Resuming Twin interface...');
-            setTimeout(() => router.push('/dashboard'), 1000);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            toast.success('Recovery signal broadcasted. Check your communication channels.');
+            setEmail('');
         } catch (err) {
-            const message = err instanceof Error ? err.message : 'Login failed';
-            console.error('[Login] Login failed:', err);
-            toast.error(message);
+            toast.error('Signal failed. Network unreachable.');
         } finally {
             setIsLoading(false);
         }
@@ -59,13 +41,13 @@ export default function LoginPage() {
                         <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm font-medium text-white/90 shadow-lg backdrop-blur-md">
                             <Sparkles className="h-4 w-4 text-primary animate-pulse" />
                             <span>LORENZ OS</span>
-                            <span className="text-green-500 text-xs ml-2">● ONLINE</span>
+                            <span className="text-yellow-500 text-xs ml-2">● RECOVERY MODE</span>
                         </div>
                         <h1 className="text-4xl font-bold tracking-tight text-white text-glow mt-4">
-                            Resume Session
+                            Restore Access
                         </h1>
                         <p className="text-white/60">
-                            Identify to access your Digital Twin.
+                            Initiate identity recovery protocol.
                         </p>
                     </div>
 
@@ -85,28 +67,6 @@ export default function LoginPage() {
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="password" className="text-white/80">Passkey</Label>
-                                <Link
-                                    href="/forgot-password"
-                                    className="text-xs text-primary-foreground/70 hover:text-white hover:underline transition-colors"
-                                >
-                                    Lost access?
-                                </Link>
-                            </div>
-                            <Input
-                                id="password"
-                                type="password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                disabled={isLoading}
-                                className="bg-white/5 border-white/10 text-white placeholder:text-white/20 h-12 focus:bg-white/10 transition-all rounded-xl"
-                            />
-                        </div>
-
                         <Button
                             type="submit"
                             className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl shadow-[0_0_30px_-5px_rgba(139,92,246,0.5)] transition-all hover:shadow-[0_0_50px_-5px_rgba(139,92,246,0.7)] hover:scale-[1.02]"
@@ -115,11 +75,11 @@ export default function LoginPage() {
                             {isLoading ? (
                                 <>
                                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                    Authenticating...
+                                    Broadcasting...
                                 </>
                             ) : (
                                 <span className="flex items-center gap-2">
-                                    Unlock Interface <ArrowRight className="h-4 w-4" />
+                                    Send Recovery Signal <ArrowRight className="h-4 w-4" />
                                 </span>
                             )}
                         </Button>
@@ -127,10 +87,10 @@ export default function LoginPage() {
 
                     <div className="text-center">
                         <Link
-                            href="/register"
-                            className="text-sm text-white/50 hover:text-white transition-colors hover:underline decoration-primary/50 underline-offset-4"
+                            href="/login"
+                            className="text-sm text-white/50 hover:text-white transition-colors hover:underline decoration-primary/50 underline-offset-4 flex items-center justify-center gap-2"
                         >
-                            New entity? <span className="text-primary-foreground">Initialize Twin</span>
+                            <ArrowLeft className="h-4 w-4" /> Abort Recovery
                         </Link>
                     </div>
                 </div>
