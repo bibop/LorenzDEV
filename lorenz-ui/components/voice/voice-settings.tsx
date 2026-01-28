@@ -63,7 +63,7 @@ export function VoiceSettings({
     const loadProviders = async () => {
         try {
             const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/v1/voice-providers/`,
+                `${process.env.NEXT_PUBLIC_API_URL}/api/v1/voice/voice-providers/`,
                 {
                     headers: {
                         Authorization: `Bearer ${api.getToken()}`,
@@ -87,7 +87,7 @@ export function VoiceSettings({
     const loadProviderVoices = async (providerId: string) => {
         try {
             const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/v1/voice-providers/${providerId}/voices`,
+                `${process.env.NEXT_PUBLIC_API_URL}/api/v1/voice/voice-providers/${providerId}/voices`,
                 {
                     headers: {
                         Authorization: `Bearer ${api.getToken()}`,
@@ -187,8 +187,8 @@ export function VoiceSettings({
                                                 <Card
                                                     key={voice.id}
                                                     className={`cursor-pointer transition-colors ${selectedVoice === voice.id
-                                                            ? 'border-primary bg-primary/5'
-                                                            : 'hover:bg-muted/50'
+                                                        ? 'border-primary bg-primary/5'
+                                                        : 'hover:bg-muted/50'
                                                         }`}
                                                     onClick={() => onVoiceChange(voice.id)}
                                                 >

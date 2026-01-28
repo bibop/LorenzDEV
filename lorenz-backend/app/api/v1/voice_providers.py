@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from typing import List, Dict
 
 from app.database import get_db
-from app.core.auth import get_current_user
+from app.api.deps import get_current_user
 from app.models.user import User
 from app.models.voice_provider import VoiceProvider, PROVIDER_NAMES, PROVIDER_CAPABILITIES
 from app.core.elevenlabs import get_elevenlabs_client

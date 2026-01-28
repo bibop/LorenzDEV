@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Volume2, VolumeX, Loader2 } from 'lucide-react';
 import { AudioStreamManager, AudioPlayer } from '@/lib/audio-stream';
 import { getVoiceClient, VoiceConnectionConfig } from '@/lib/voice-websocket';
+import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 interface VoiceChatProps {
@@ -53,6 +54,7 @@ export function VoiceChat({
                 provider,
                 voiceId,
                 personaId,
+                token: api.getToken() || '',
             };
 
             await voiceClient.current.connect(config);

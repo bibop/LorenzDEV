@@ -36,6 +36,25 @@ async def get_current_user(
         )
 
     token = credentials.credentials
+    
+    # #!!MOCK!!# Development bypass for testing - JIRA-Voice-Test
+    # Allow "test_token" in debug mode to bypass authentication
+    if settings.DEBUG and token == "test_token":
+        from uuid import UUID
+        # Return mock user for testing
+        mock_user = User(
+            id=UUID("00000000-0000-0000-0000-000000000001"),
+            email="test@lorenz.ai",
+            name="Test User",
+            tenant_id=UUID("00000000-0000-0000-0000-000000000001"),
+            role="owner",
+            is_active=True,
+            email_verified=True
+        )
+        await set_tenant_context(db, str(mock_user.tenant_id))
+        return mock_user
+    # #!!END_MOCK!!#
+    
     try:
         payload = jwt.decode(
             token,

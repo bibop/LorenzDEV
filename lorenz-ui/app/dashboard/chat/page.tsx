@@ -12,8 +12,10 @@ import { VoiceUploader } from '@/components/voice/voice-uploader';
 import { VoiceChat } from '@/components/voice/voice-chat';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Menu, Settings, LogOut, X, Loader2, Mic, Plus, Upload } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 interface ChatMessage {
     id: string;
@@ -190,25 +192,7 @@ export default function ChatPage() {
                 </div>
 
                 {/* Voice Chat Section */}
-                {isVoiceChatActive && activeConversationId && selectedVoice && (
-                    <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">
-                        <VoiceChat
-                            conversationId={activeConversationId}
-                            provider={selectedProvider}
-                            voiceId={selectedVoice}
-                            onTranscript={(text, isUser) => {
-                                // Add transcript to messages
-                                const newMessage: ChatMessage = {
-                                    id: Date.now().toString(),
-                                    content: text,
-                                    role: isUser ? 'user' : 'assistant',
-                                    timestamp: new Date(),
-                                };
-                                setMessages((prev) => [...prev, newMessage]);
-                            }}
-                        />
-                    </div>
-                )}
+
 
                 {/* Messages */}
                 <ScrollArea className="flex-1 p-4">
@@ -252,53 +236,109 @@ export default function ChatPage() {
                     </div>
                 </ScrollArea>
 
-                {/* Input */}
+                {/* Input Area */}
                 <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">
-                    <div className="max-w-3xl mx-auto">
-                        <ChatInput onSend={handleSendMessage} disabled={isLoading} />
+                    <div className="max-w-3xl mx-auto space-y-4">
+                        {/* Voice Mode Toggle */}
+                        {isVoiceChatActive && (
+                            <Card className="p-4 border-primary/20 bg-primary/5">
+                                <div className="flex items-center justify-between mb-4">
+                                    <span className="text-sm font-medium flex items-center gap-2">
+                                        <Mic className="h-4 w-4 text-primary" />
+                                        Voice Mode Active
+                                    </span>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setIsVoiceChatActive(false)}
+                                        className="h-8 w-8 p-0"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <VoiceChat
+                                    conversationId={activeConversationId || ''}
+                                    provider={selectedProvider}
+                                    voiceId={selectedVoice}
+                                    onTranscript={(text, isUser) => {
+                                        const newMessage: ChatMessage = {
+                                            id: Date.now().toString(),
+                                            content: text,
+                                            role: isUser ? 'user' : 'assistant',
+                                            timestamp: new Date(),
+                                        };
+                                        setMessages((prev) => [...prev, newMessage]);
+                                    }}
+                                />
+                            </Card>
+                        )}
+
+                        {!isVoiceChatActive && (
+                            <ChatInput
+                                onSend={handleSendMessage}
+                                disabled={isLoading}
+                                onVoiceClick={() => setIsVoiceChatActive(true)}
+                            />
+                        )}
                     </div>
                 </div>
             </div>
 
             {/* Voice Settings Panel */}
             {showVoiceSettings && (
-                <div className="fixed right-0 top-0 h-screen w-96 bg-background border-l shadow-lg z-50 overflow-y-auto">
-                    <div className="p-4 border-b flex items-center justify-between">
-                        <h2 className="text-lg font-semibold flex items-center gap-2">
-                            <Mic className="h-5 w-5 text-primary" />
-                            Voice Settings
-                        </h2>
-                        <Button variant="ghost" size="icon" onClick={() => setShowVoiceSettings(false)}>
-                            <X className="h-5 w-5" />
-                        </Button>
-                    </div>
-                    <div className="p-4 space-y-4">
-                        <VoiceSettings
-                            selectedProvider={selectedProvider}
-                            selectedVoice={selectedVoice}
-                            onProviderChange={(provider) => setSelectedProvider(provider as 'personaplex' | 'elevenlabs')}
-                            onVoiceChange={setSelectedVoice}
-                        />
-                        <div className="space-y-2">
-                            <Button
-                                className="w-full"
-                                variant="outline"
-                                onClick={() => setShowPersonaEditor(true)}
-                            >
-                                <Plus className="mr-2 h-4 w-4" />
-                                Create Persona
-                            </Button>
-                            <Button
-                                className="w-full"
-                                variant="outline"
-                                onClick={() => setShowVoiceUploader(true)}
-                            >
-                                <Upload className="mr-2 h-4 w-4" />
-                                Upload Voice
+                <ErrorBoundary
+                    fallback={
+                        <div className="fixed right-0 top-0 h-screen w-96 bg-background border-l shadow-lg z-50 p-4">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg font-semibold">Voice Settings</h2>
+                                <Button variant="ghost" size="icon" onClick={() => setShowVoiceSettings(false)}>
+                                    <X className="h-5 w-5" />
+                                </Button>
+                            </div>
+                            <div className="text-muted-foreground">
+                                Loading voice settings encountered an error. Please refresh the page.
+                            </div>
+                        </div>
+                    }
+                >
+                    <div className="fixed right-0 top-0 h-screen w-96 bg-background border-l shadow-lg z-50 overflow-y-auto">
+                        <div className="p-4 border-b flex items-center justify-between">
+                            <h2 className="text-lg font-semibold flex items-center gap-2">
+                                <Mic className="h-5 w-5 text-primary" />
+                                Voice Settings
+                            </h2>
+                            <Button variant="ghost" size="icon" onClick={() => setShowVoiceSettings(false)}>
+                                <X className="h-5 w-5" />
                             </Button>
                         </div>
+                        <div className="p-4 space-y-4">
+                            <VoiceSettings
+                                selectedProvider={selectedProvider}
+                                selectedVoice={selectedVoice}
+                                onProviderChange={(provider) => setSelectedProvider(provider as 'personaplex' | 'elevenlabs')}
+                                onVoiceChange={setSelectedVoice}
+                            />
+                            <div className="space-y-2">
+                                <Button
+                                    className="w-full"
+                                    variant="outline"
+                                    onClick={() => setShowPersonaEditor(true)}
+                                >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Create Persona
+                                </Button>
+                                <Button
+                                    className="w-full"
+                                    variant="outline"
+                                    onClick={() => setShowVoiceUploader(true)}
+                                >
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    Upload Voice
+                                </Button>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </ErrorBoundary>
             )}
 
             {/* Modals */}

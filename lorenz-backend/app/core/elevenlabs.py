@@ -84,7 +84,8 @@ class ElevenLabsClient:
         self,
         text: str,
         voice_id: str,
-        model_id: str = "eleven_monolingual_v1"
+        model_id: str = "eleven_monolingual_v1",
+        output_format: str = "pcm_24000"
     ):
         """
         Stream text to speech (for real-time playback)
@@ -101,7 +102,7 @@ class ElevenLabsClient:
         
         async with self.client.stream(
             "POST",
-            f"{self.base_url}/text-to-speech/{voice_id}/stream",
+            f"{self.base_url}/text-to-speech/{voice_id}/stream?output_format={output_format}",
             json=payload
         ) as response:
             response.raise_for_status()

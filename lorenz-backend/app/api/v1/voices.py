@@ -17,7 +17,7 @@ from app.schemas.voice import (
     VoiceCreate, VoiceUpdate, VoiceResponse,
     PersonaCreate, PersonaUpdate, PersonaResponse
 )
-from app.core.auth import get_current_user
+from app.api.deps import get_current_user
 from app.models.user import User
 
 

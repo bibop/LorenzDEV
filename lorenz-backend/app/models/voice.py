@@ -36,7 +36,7 @@ class Voice(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    creator = relationship("User", back_populates="voices")
+    creator = relationship("User")  # Removed back_populates - User model doesn't have 'voices'
     tenant = relationship("Tenant")
     personas = relationship("Persona", back_populates="voice")
 
@@ -67,6 +67,6 @@ class Persona(Base):
     
     # Relationships
     voice = relationship("Voice", back_populates="personas")
-    creator = relationship("User", back_populates="personas")
+    creator = relationship("User")  # Removed back_populates - User model doesn't have 'personas'
     tenant = relationship("Tenant")
-    conversations = relationship("Conversation", back_populates="persona")
+    # conversations removed - no FK exists in Conversation table

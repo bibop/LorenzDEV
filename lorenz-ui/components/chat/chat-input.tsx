@@ -3,15 +3,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, Mic } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ChatInputProps {
     onSend: (message: string) => Promise<void>;
     disabled?: boolean;
+    onVoiceClick?: () => void;
 }
 
-export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
+export function ChatInput({ onSend, disabled = false, onVoiceClick }: ChatInputProps) {
     const [message, setMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -52,6 +53,18 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
 
     return (
         <form onSubmit={handleSubmit} className="flex gap-2 items-end">
+            {onVoiceClick && (
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-[60px] w-[60px]"
+                    onClick={onVoiceClick}
+                    disabled={disabled || isSending}
+                >
+                    <Mic className="h-5 w-5 text-muted-foreground hover:text-primary" />
+                </Button>
+            )}
             <div className="flex-1">
                 <Textarea
                     ref={textareaRef}

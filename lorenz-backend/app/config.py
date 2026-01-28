@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     # App Info
     APP_NAME: str = "LORENZ"
     APP_VERSION: str = "2.0.0"
-    DEBUG: bool = False
+    DEBUG: bool = True  # Set to True for voice testing
 
     # Server
     HOST: str = "0.0.0.0"
