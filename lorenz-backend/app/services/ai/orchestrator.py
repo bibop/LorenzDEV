@@ -22,6 +22,7 @@ from datetime import datetime
 from uuid import UUID
 
 from app.config import settings
+from app.services.ai.providers.openrouter import OpenRouterProvider
 
 logger = logging.getLogger(__name__)
 
@@ -160,22 +161,51 @@ MODELS = {
         capabilities=["chat", "long_context", "coding"],
         speed="ultra-fast"
     ),
+
+    # OpenRouter Models (Kimi, DeepSeek, Llama)
+    "kimi-k2.5": ModelConfig(
+        name="moonshotai/kimi-k2.5",
+        provider="openrouter",
+        cost_input=0.30, # Estimated
+        cost_output=1.20, # Estimated
+        max_tokens=200000, # Conservative limit (claims 256k)
+        capabilities=["reasoning", "coding", "long_context", "analysis"],
+        speed="medium"
+    ),
+    "deepseek-v3": ModelConfig(
+        name="deepseek/deepseek-chat-v3",
+        provider="openrouter",
+        cost_input=0.14,
+        cost_output=0.28,
+        max_tokens=64000,
+        capabilities=["reasoning", "coding", "analysis"],
+        speed="medium"
+    ),
+    "llama-3.3-70b": ModelConfig(
+        name="meta-llama/llama-3.3-70b-instruct",
+        provider="openrouter",
+        cost_input=0.40,
+        cost_output=0.40,
+        max_tokens=128000,
+        capabilities=["chat", "reasoning", "general"],
+        speed="fast"
+    ),
 }
 
 # Task to model routing preferences
 TASK_ROUTING = {
-    TaskType.CHAT: ["groq-llama70b", "claude-haiku", "gpt-4o-mini"],
-    TaskType.CODING: ["claude-sonnet", "gpt-4o", "groq-llama70b"],
-    TaskType.REASONING: ["claude-opus", "claude-sonnet", "gpt-4o"],
-    TaskType.ANALYSIS: ["claude-sonnet", "gemini-pro", "gpt-4o"],
-    TaskType.CREATIVE: ["claude-sonnet", "gpt-4o", "claude-opus"],
+    TaskType.CHAT: ["llama-3.3-70b", "gpt-4o-mini", "kimi-k2.5"], # Smart: Lighter model for general chat
+    TaskType.CODING: ["kimi-k2.5", "deepseek-v3", "claude-sonnet"],
+    TaskType.REASONING: ["kimi-k2.5", "deepseek-v3", "claude-sonnet"],
+    TaskType.ANALYSIS: ["kimi-k2.5", "claude-sonnet", "gpt-4o"],
+    TaskType.CREATIVE: ["claude-sonnet", "gpt-4o", "llama-3.3-70b"],
     TaskType.VISION: ["gpt-4o", "claude-sonnet", "gemini-pro"],
-    TaskType.LONG_CONTEXT: ["gemini-pro", "groq-mixtral", "claude-sonnet"],
-    TaskType.FAST_RESPONSE: ["groq-llama8b", "groq-llama70b", "claude-haiku"],
+    TaskType.LONG_CONTEXT: ["kimi-k2.5", "gemini-pro", "claude-sonnet"],
+    TaskType.FAST_RESPONSE: ["groq-llama8b", "groq-llama70b", "gpt-4o-mini"],
     TaskType.TRANSLATION: ["gpt-4o", "claude-sonnet", "gemini-pro"],
-    TaskType.SUMMARIZATION: ["claude-haiku", "groq-llama70b", "gpt-4o-mini"],
-    TaskType.EMAIL_DRAFT: ["claude-sonnet", "gpt-4o", "gemini-pro"],
-    TaskType.CALENDAR: ["claude-haiku", "gpt-4o-mini", "groq-llama8b"],
+    TaskType.SUMMARIZATION: ["claude-haiku", "groq-llama70b", "llama-3.3-70b"],
+    TaskType.EMAIL_DRAFT: ["llama-3.3-70b", "gpt-4o", "gemini-pro"],
+    TaskType.CALENDAR: ["gpt-4o-mini", "groq-llama8b"],
 }
 
 
@@ -201,6 +231,18 @@ class AIProvider:
 
         Returns:
             Tuple of (response_text, input_tokens, output_tokens)
+        """
+        raise NotImplementedError
+
+    async def stream(
+        self,
+        messages: List[Dict],
+        model: str,
+        **kwargs
+    ):
+        """
+        Stream a chat request
+        Yields text chunks
         """
         raise NotImplementedError
 
@@ -248,6 +290,48 @@ class AnthropicProvider(AIProvider):
                 output_tokens = usage.get("output_tokens", 0)
 
                 return text, input_tokens, output_tokens
+
+    async def stream(
+        self,
+        messages: List[Dict],
+        model: str,
+        max_tokens: int = 4096,
+        system: str = None,
+        **kwargs
+    ):
+        if not self.enabled:
+            raise ValueError("Anthropic API key not configured")
+
+        headers = {
+            "x-api-key": self.api_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json"
+        }
+
+        payload = {
+            "model": model,
+            "max_tokens": max_tokens,
+            "messages": messages,
+            "stream": True
+        }
+
+        if system:
+            payload["system"] = system
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(self.API_URL, headers=headers, json=payload) as resp:
+                async for line in resp.content:
+                    line = line.decode().strip()
+                    if line.startswith("data: "):
+                        import json
+                        try:
+                            data = json.loads(line[6:])
+                            if data.get("type") == "content_block_delta":
+                                text = data.get("delta", {}).get("text", "")
+                                if text:
+                                    yield text
+                        except:
+                            pass
 
 
 class OpenAIProvider(AIProvider):
@@ -593,6 +677,9 @@ class SaaSAIOrchestrator:
             "perplexity": PerplexityProvider(
                 api_keys.get("PERPLEXITY_API_KEY", settings.PERPLEXITY_API_KEY or "")
             ),
+            "openrouter": OpenRouterProvider(
+                api_keys.get("OPENROUTER_API_KEY", settings.OPENROUTER_API_KEY or "")
+            ),
         }
 
         # Stats tracking
@@ -830,7 +917,73 @@ class SaaSAIOrchestrator:
                 "model": model,
                 "task_type": task_type.value if task_type else None
             }
+            return {
+                "success": False,
+                "error": str(e),
+                "response": None,
+                "model": model,
+                "task_type": task_type.value if task_type else None
+            }
 
+    async def stream(
+        self,
+        prompt: str,
+        task_type: TaskType = None,
+        model: str = None,
+        context: str = None,
+        system_prompt: str = None,
+        conversation_history: List[Dict] = None,
+        prefer_fast: bool = False,
+        prefer_cheap: bool = False,
+        max_tokens: int = None
+    ):
+        """Stream a response through the orchestrator"""
+        
+        # Auto-classify
+        if task_type is None:
+            task_type = TaskClassifier.classify(prompt)
+
+        # Select model
+        if model is None:
+            model = self._select_model(task_type, prefer_fast, prefer_cheap)
+
+        if model is None:
+            yield {"type": "error", "error": "No AI models available"}
+            return
+
+        model_config = MODELS[model]
+        provider = self.providers[model_config.provider]
+
+        # Build messages
+        messages = []
+        if conversation_history:
+            messages.extend(conversation_history)
+        
+        if context:
+            user_content = f"Context:\n{context}\n\n---\n\n{prompt}"
+        else:
+            user_content = prompt
+
+        messages.append({"role": "user", "content": user_content})
+
+        yield {"type": "meta", "model": model, "provider": model_config.provider}
+
+        try:
+            tokens_limit = max_tokens or model_config.max_tokens
+            
+            async for chunk in provider.stream(
+                messages=messages,
+                model=model_config.name,
+                max_tokens=tokens_limit,
+                system=system_prompt
+            ):
+                yield {"type": "text", "content": chunk}
+                
+            yield {"type": "done"}
+            
+        except Exception as e:
+            logger.error(f"Stream error: {e}")
+            yield {"type": "error", "error": str(e)}
     async def generate_image(
         self,
         prompt: str,

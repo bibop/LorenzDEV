@@ -206,19 +206,37 @@ class AIService:
         # Get conversation history
         messages = await self._get_conversation_history(conversation.id)
 
-        # Stream from Claude
+        # Stream from Orchestrator (Smart Router)
         full_response = ""
         total_tokens = 0
+        model_used = conversation.model
 
-        async for chunk in self._stream_claude(
-            messages=messages,
-            system_prompt=self._build_system_prompt(user, ai_context)
+        async for chunk in self.orchestrator.stream(
+            prompt=message,
+            context=ai_context.get("rag_context", ""),
+            system_prompt=self._build_system_prompt(user, ai_context),
+            conversation_history=messages
         ):
-            if chunk.get("type") == "text":
-                full_response += chunk.get("content", "")
-                yield chunk
-            elif chunk.get("type") == "done":
-                total_tokens = chunk.get("tokens", 0)
+            chunk_type = chunk.get("type")
+            
+            if chunk_type == "meta":
+                model_used = chunk.get("model", "unknown")
+                # Could update conversation model here if needed
+                
+            elif chunk_type == "text":
+                text = chunk.get("content", "")
+                full_response += text
+                yield {"type": "text", "content": text}
+                
+            elif chunk_type == "done":
+                # We could get tokens from chunk if orchestrator sends them
+                # For now we might need to estimate or wait for provider support
+                tokens = chunk.get("tokens", 0)
+                if tokens:
+                    total_tokens = tokens
+                yield {"type": "done", "tokens": total_tokens}
+                
+            elif chunk_type == "error":
                 yield chunk
 
         # Save assistant message
