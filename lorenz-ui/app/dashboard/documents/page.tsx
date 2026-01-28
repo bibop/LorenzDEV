@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DocumentUploader } from '@/components/documents/document-uploader';
 import { DocumentList } from '@/components/documents/document-list';
-import { Upload, Search, Filter } from 'lucide-react';
-import { documentAPI, type Document } from '@/lib/document-api';
+import { DocumentPreview } from '@/components/documents/document-preview';
+import { DocumentSearch } from '@/components/documents/document-search';
+import { Upload } from 'lucide-react';
+import { documentAPI, type Document, type SearchFilters } from '@/lib/document-api';
 import { api } from '@/lib/api';
 
 export default function DocumentsPage() {
@@ -16,6 +18,8 @@ export default function DocumentsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [showUploader, setShowUploader] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [searchFilters, setSearchFilters] = useState<SearchFilters>({});
+    const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
 
     useEffect(() => {
         // Check authentication
@@ -34,6 +38,7 @@ export default function DocumentsPage() {
             const result = await documentAPI.getDocuments({
                 limit: 50,
                 search: searchQuery || undefined,
+                filters: searchFilters,
             });
             setDocuments(result.documents);
         } catch (error) {
@@ -41,6 +46,13 @@ export default function DocumentsPage() {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleSearch = (query: string, filters: SearchFilters) => {
+        setSearchQuery(query);
+        setSearchFilters(filters);
+        // Trigger reload with new search params
+        setTimeout(loadDocuments, 100);
     };
 
     const handleUploadComplete = () => {
@@ -62,8 +74,12 @@ export default function DocumentsPage() {
     };
 
     const handlePreview = (document: Document) => {
-        // TODO: Open preview modal
-        console.log('Preview:', document);
+        setPreviewDocument(document);
+    };
+
+    const handleDownload = (document: Document) => {
+        // TODO: Implement download from backend
+        console.log('Download:', document);
     };
 
     return (
@@ -92,21 +108,9 @@ export default function DocumentsPage() {
                         </div>
                     </div>
 
-                    {/* Search Bar */}
-                    <div className="mt-4 max-w-2xl">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <input
-                                type="text"
-                                placeholder="Search documents..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') loadDocuments();
-                                }}
-                                className="w-full pl-10 pr-4 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                            />
-                        </div>
+                    {/* Search */}
+                    <div className="mt-4">
+                        <DocumentSearch onSearch={handleSearch} isLoading={isLoading} />
                     </div>
                 </div>
             </div>
@@ -126,8 +130,17 @@ export default function DocumentsPage() {
                     isLoading={isLoading}
                     onPreview={handlePreview}
                     onDelete={handleDelete}
+                    onDownload={handleDownload}
                 />
             </div>
+
+            {/* Preview Modal */}
+            <DocumentPreview
+                document={previewDocument}
+                open={!!previewDocument}
+                onOpenChange={(open) => !open && setPreviewDocument(null)}
+                onDownload={handleDownload}
+            />
 
             {/* Upload Dialog */}
             <Dialog open={showUploader} onOpenChange={setShowUploader}>
@@ -140,8 +153,9 @@ export default function DocumentsPage() {
                             handleUploadComplete();
                             // Keep dialog open so user can see upload status
                         }}
-                        maxFiles={10}
+                        maxFiles={100}
                         maxSize={50}
+                        allowFolders={true}
                     />
                 </DialogContent>
             </Dialog>
