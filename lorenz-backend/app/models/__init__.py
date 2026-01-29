@@ -22,6 +22,19 @@ from app.models.twin import (
     TwinActionModel,
 )
 
+# Social Graph Models
+from app.models.social_graph import (
+    UnifiedContact,
+    ContactSourceLink,
+    ContactInteraction,
+    ContactOpportunity,
+    SocialGraphEdge,
+    DataSource,
+    InteractionType,
+    RelationshipType,
+    OpportunityType,
+)
+
 # Unified Skill System Models
 from app.models.skills import (
     Skill,
@@ -57,6 +70,16 @@ __all__ = [
     "TwinLearningModel",
     "TwinPatternModel",
     "TwinActionModel",
+    # Social Graph
+    "UnifiedContact",
+    "ContactSourceLink",
+    "ContactInteraction",
+    "ContactOpportunity",
+    "SocialGraphEdge",
+    "DataSource",
+    "InteractionType",
+    "RelationshipType",
+    "OpportunityType",
     # MNEME
     "KnowledgeEntryModel",
     "EmergentSkillModel",
