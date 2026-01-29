@@ -5,7 +5,7 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL !== undefined
     ? process.env.NEXT_PUBLIC_API_URL
-    : 'http://localhost:8050';
+    : 'http://localhost:8000';
 
 interface LoginRequest {
     email: string;
