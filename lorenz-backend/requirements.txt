@@ -3,7 +3,7 @@
 # FastAPI & Server
 fastapi==0.109.0
 uvicorn[standard]==0.27.0
-python-multipart==0.0.6
+python-multipart==0.0.22
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 bcrypt==3.2.2
@@ -26,7 +26,7 @@ celery[redis]==5.3.6
 anthropic==0.18.1
 openai==1.12.0
 sentence-transformers==2.3.1
-qdrant-client==1.7.3
+qdrant-client==1.9.0
 google-generativeai==0.3.2  # Gemini API
 elevenlabs==1.5.0
 
@@ -41,7 +41,7 @@ ragatouille==0.0.8  # ColBERT support
 numpy==1.26.3
 
 # HTTP Client
-aiohttp==3.9.3
+aiohttp==3.13.3
 httpx==0.26.0
 
 # Email
@@ -54,7 +54,7 @@ python-docx==1.1.0
 python-pptx==0.6.23  # PowerPoint presentations
 
 # Cryptography
-cryptography==42.0.2
+cryptography==44.0.1
 
 # Utilities
 python-dotenv==1.0.1
@@ -70,6 +70,6 @@ pytest-cov==4.1.0
 asyncssh==2.14.2
 
 # Development
-black==24.1.1
+black==24.3.0
 isort==5.13.2
 mypy==1.8.0
