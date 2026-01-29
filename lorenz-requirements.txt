@@ -4,7 +4,7 @@
 python-telegram-bot==20.7
 
 # HTTP Client for Claude API
-aiohttp==3.9.1
+aiohttp==3.13.3
 
 # Email (built-in)
 # imaplib - built-in
