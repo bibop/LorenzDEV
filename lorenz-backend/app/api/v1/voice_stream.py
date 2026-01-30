@@ -16,6 +16,7 @@ from app.core.personaplex import get_personaplex_client
 from app.core.elevenlabs import get_elevenlabs_client
 from app.models.voice_provider import VoiceProvider
 from app.services.twin import get_twin_service, TwinService
+from app.services.ai.stt import get_stt_service
 from jose import jwt, JWTError
 from sqlalchemy import select
 
@@ -83,6 +84,8 @@ class VoiceStreamHandler:
         self.persona_id = persona_id
         self.is_active = False
         self.twin: Optional[TwinService] = None
+        self.audio_buffer = bytearray()
+        self.stt = get_stt_service()
     
     async def start(self):
         """Start voice streaming session"""
@@ -130,13 +133,16 @@ class VoiceStreamHandler:
         try:
             while self.is_active:
                 # Receive user audio
-                audio_data = await self.receive_audio_chunk()
-                if not audio_data:
+                audio_chunk = await self.receive_audio_chunk()
+                if not audio_chunk:
                     break
                 
-                # Calculate RMS (Energy)
+                # Add to buffer
+                self.audio_buffer.extend(audio_chunk)
+                
+                # Calculate RMS (Energy) for VAD
                 try:
-                    rms = audioop.rms(audio_data, 2)
+                    rms = audioop.rms(audio_chunk, 2) # Assume 16-bit
                 except Exception:
                     rms = 0
 
@@ -152,30 +158,35 @@ class VoiceStreamHandler:
                     is_speaking = False
                     silence_frames = 0
                     
-                    # 1. Mock STT (Step A)
-                    # #!!MOCK!!# STT Placeholder
-                    transcript = "Qual è lo status del progetto?"
-                    logger.info(f"Mock STT: {transcript}")
-                    await self.send_transcript(transcript, is_user=True)
-                    # #!!END_MOCK!!#
-                    
-                    # 2. Get Brain Response (Step B)
-                    try:
-                        response_text = await self.twin.process_message(transcript)
-                        logger.info(f"Twin Response: {response_text[:50]}...")
-                        await self.send_transcript(response_text, is_user=False)
-                    except Exception as e:
-                        logger.error(f"Brain processing error: {e}")
-                        response_text = "Sorry, I'm having trouble thinking right now."
-                    
-                    # 3. Stream TTS Response (Step C)
-                    async for audio_chunk in client.text_to_speech_stream(
-                        text=response_text,
-                        voice_id=self.voice_id or "21m00Tcm4TlvDq8ikWAM",
-                        output_format="pcm_24000"
-                    ):
-                        if not self.is_active: break
-                        await self.send_audio(audio_chunk)
+                    # 1. Real STT (using OpenAI Whisper)
+                    if len(self.audio_buffer) > 3200: # At least 0.1s of audio
+                        logger.info(f"Transcribing {len(self.audio_buffer)} bytes of audio...")
+                        transcript = await self.stt.transcribe(bytes(self.audio_buffer))
+                        self.audio_buffer.clear() # Reset buffer for next turn
+                        
+                        if transcript.strip():
+                            logger.info(f"STT Transcript: {transcript}")
+                            await self.send_transcript(transcript, is_user=True)
+                            
+                            # 2. Get Brain Response
+                            try:
+                                response_text = await self.twin.process_message(transcript)
+                                logger.info(f"Twin Response: {response_text[:50]}...")
+                                await self.send_transcript(response_text, is_user=False)
+                                
+                                # 3. Stream TTS Response
+                                async for playback_chunk in client.text_to_speech_stream(
+                                    text=response_text,
+                                    voice_id=self.voice_id or "21m00Tcm4TlvDq8ikWAM",
+                                    output_format="pcm_24000"
+                                ):
+                                    if not self.is_active: break
+                                    await self.send_audio(playback_chunk)
+                            except Exception as e:
+                                logger.error(f"Brain/TTS processing error: {e}")
+                                await self.send_error("AI encountered an error processing your request")
+                        else:
+                            logger.warning("Empty transcript received")
         
         except Exception as e:
             await self.send_error(f"ElevenLabs error: {str(e)}")

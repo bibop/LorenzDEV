@@ -94,20 +94,33 @@ export default function ChatPage() {
         setIsLoading(true);
 
         try {
-            // TODO: Replace with actual API call
-            // const response = await api.sendChatMessage(activeConversationId, content);
+            const aiMessageId = (Date.now() + 1).toString();
+            let aiContent = "";
 
-            // Mock AI response
-            setTimeout(() => {
-                const aiMessage: ChatMessage = {
-                    id: (Date.now() + 1).toString(),
-                    content: "I'm a demo response. The real AI integration is coming soon!",
-                    role: 'assistant',
-                    timestamp: new Date(),
-                };
-                setMessages((prev) => [...prev, aiMessage]);
-                setIsLoading(false);
-            }, 1000);
+            // Create a pending assistant message
+            setMessages((prev) => [...prev, {
+                id: aiMessageId,
+                content: "",
+                role: 'assistant',
+                timestamp: new Date(),
+            }]);
+
+            // Stream response
+            for await (const chunk of api.sendChatMessageStream(activeConversationId, content)) {
+                if (chunk.type === 'text') {
+                    aiContent += chunk.content;
+                    setMessages((prev) =>
+                        prev.map(msg =>
+                            msg.id === aiMessageId ? { ...msg, content: aiContent } : msg
+                        )
+                    );
+                } else if (chunk.type === 'done') {
+                    setIsLoading(false);
+                } else if (chunk.type === 'error') {
+                    console.error('Stream error:', chunk.error);
+                    setIsLoading(false);
+                }
+            }
         } catch (error) {
             console.error('Failed to send message:', error);
             setIsLoading(false);

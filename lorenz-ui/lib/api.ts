@@ -148,6 +148,66 @@ class LorenzAPIClient {
         return this.request<any[]>(`/api/v1/voice/voice-providers/${providerId}/voices`);
     }
 
+    // Chat API
+    async sendChatMessage(conversationId: string | undefined, message: string, attachments: any[] = []) {
+        return this.request<any>('/api/v1/chat/message', {
+            method: 'POST',
+            body: JSON.stringify({
+                conversation_id: conversationId,
+                message,
+                attachments,
+                channel: 'web'
+            }),
+        });
+    }
+
+    async *sendChatMessageStream(conversationId: string | undefined, message: string, attachments: any[] = []) {
+        const token = this.getToken();
+        const response = await fetch(`${this.baseURL}/api/v1/chat/message/stream`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+                conversation_id: conversationId,
+                message,
+                attachments,
+                channel: 'web'
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to start stream: ${response.statusText}`);
+        }
+
+        const reader = response.body?.getReader();
+        if (!reader) return;
+
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    try {
+                        const data = JSON.parse(line.slice(6));
+                        yield data;
+                    } catch (e) {
+                        console.error('Failed to parse stream chunk:', e);
+                    }
+                }
+            }
+        }
+    }
+
     // Check if user is authenticated
     isAuthenticated(): boolean {
         return !!this.getToken();
