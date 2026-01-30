@@ -148,6 +148,27 @@ class LorenzAPIClient {
         return this.request<any[]>(`/api/v1/voice/voice-providers/${providerId}/voices`);
     }
 
+    async generateTTS(text: string, voiceId?: string): Promise<ArrayBuffer> {
+        const token = this.getToken();
+        const response = await fetch(`${this.baseURL}/api/v1/tts/generate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+                text,
+                voice_id: voiceId || "21m00Tcm4TlvDq8ikWAM"
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`TTS failed: ${response.statusText}`);
+        }
+
+        return response.arrayBuffer();
+    }
+
     // Chat API
     async sendChatMessage(conversationId: string | undefined, message: string, attachments: any[] = []) {
         return this.request<any>('/api/v1/chat/message', {
