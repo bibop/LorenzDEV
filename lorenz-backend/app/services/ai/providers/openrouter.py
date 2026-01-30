@@ -11,13 +11,14 @@ class OpenRouterProvider(AIProvider):
     
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
-        if not self.api_key:
-            raise ValueError("OPENROUTER_API_KEY is not set")
-            
-        self.client = AsyncOpenAI(
-            base_url="https://openrouter.ai/api/v1",
-            api_key=self.api_key,
-        )
+        
+        if self.api_key:
+            self.client = AsyncOpenAI(
+                base_url="https://openrouter.ai/api/v1",
+                api_key=self.api_key,
+            )
+        else:
+            self.client = None
         
         # Default model mapping
         self.default_model = "moonshotai/kimi-k2.5" # Latest Kimi

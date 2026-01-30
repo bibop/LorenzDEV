@@ -2,32 +2,32 @@
 
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
+    --background: 240 25% 4%;
     --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
+    --card: 240 25% 6%;
     --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
+    --popover: 240 25% 6%;
     --popover-foreground: 0 0% 98%;
 
-    /* Vibrant Velvet / Electric Indigo */
-    --primary: 265 89% 66%;
+    /* Vibrant Velvet / Electric Indigo - More Premium */
+    --primary: 265 89% 68%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 3.7% 15.9%;
+    --secondary: 240 10% 12%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 240 3.7% 15.9%;
+    --muted: 240 10% 12%;
     --muted-foreground: 240 5% 64.9%;
 
-    --accent: 265 89% 66%;
+    --accent: 265 89% 68%;
     --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --border: 240 10% 15%;
+    --input: 240 10% 15%;
+    --ring: 265 89% 68%;
 
     --radius: 0.75rem;
   }
@@ -53,11 +53,11 @@
 
   .aurora-bg {
     background:
-      radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
-      radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
-      radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+      radial-gradient(at 0% 0%, hsla(265, 89%, 10%, 1) 0, transparent 50%),
+      radial-gradient(at 50% 0%, hsla(240, 25%, 8%, 1) 0, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(265, 89%, 15%, 1) 0, transparent 50%);
     background-size: 200% 200%;
-    animation: aurora 15s ease infinite;
+    animation: aurora 20s ease infinite;
   }
 }
 

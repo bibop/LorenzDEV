@@ -16,7 +16,7 @@ from app.api.deps import get_current_user
 from app.models import User
 from app.services.knowledge import MNEME, KnowledgeEntry, create_mneme
 
-router = APIRouter(prefix="/knowledge", tags=["Knowledge Base"])
+router = APIRouter(tags=["Knowledge Base"])
 
 
 # ============================================================================

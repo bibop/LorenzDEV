@@ -43,6 +43,7 @@ services:
       - CORS_ORIGINS=https://lorenz.bibop.com,https://dev.lorenz.bibop.com
       - CLAUDE_API_KEY=${CLAUDE_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
